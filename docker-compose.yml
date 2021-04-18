@@ -65,6 +65,7 @@ services:
       - TIME_ZONE=${timeZone}
       - WEB_CONCURRENCY=${gunniWorkers}
       - SKIP_PATTERNS=${skipPatterns}
+      - IMAGE_SCAN_SCHEDULE=${imageScanSchedule}
       - DEBUG=0
 
     # Wait for Postgres
