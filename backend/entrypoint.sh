@@ -21,7 +21,7 @@ then
     IMAGE_SCAN_SCHEDULE="0 */6 * * *"
 fi
 
-echo "$IMAGE_SCAN_SCHEDULE python3 manage.py scan >/dev/null 2>&1" > crontab
+echo "$IMAGE_SCAN_SCHEDULE python3 manage.py scan 2>&1" > crontab
 supercronic crontab &
 
 if [ "$DEBUG" = 1 ]
