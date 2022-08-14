@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+#Run Task every midnight, edit cron expression to change
+echo "0 0 * * * root /usr/bin/unattended-upgrade" >> /etc/crontab
+echo "Cron supervisord started ..."
+
+exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
