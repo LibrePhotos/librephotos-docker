@@ -54,6 +54,20 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
     
+#  Add unattended-upgrade
+RUN apt-get update \
+  && apt-get install -y supervisor unattended-upgrades \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY supervisor-cron /supervisor-cron
+RUN chmod 755 supervisor-cron
+RUN /supervisor-cron
+
+COPY cronjob-upgrade /cronjob-upgrade
+RUN chmod 755 /cronjob-upgrade
+
+ENTRYPOINT ["/cronjob-upgrade"]
+
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then pip3 install --no-cache-dir torch torchvision -f https://torch.kmtea.eu/whl/stable.html; else pip3 install --no-cache-dir torch torchvision; fi
 
 RUN pip3 install --no-cache-dir pyvips==2.2.1 cmake==3.21.2
