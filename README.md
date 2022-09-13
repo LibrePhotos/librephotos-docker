@@ -11,3 +11,8 @@ make rename
 ```
 Then you can resume following the normal instructions.
 
+
+
+### Infrastructure model
+
+![Infrastructure model](.infragenie/infrastructure_model.png)
