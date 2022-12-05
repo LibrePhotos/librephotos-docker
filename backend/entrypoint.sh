@@ -10,7 +10,7 @@ python manage.py clear_cache
 
 if [ -n "$ADMIN_USERNAME" ]
 then
-    python manage.py createadmin -u $ADMIN_USERNAME $ADMIN_EMAIL 2>&1 | tee /logs/command_createadmin.log
+    python manage.py createuser --update --admin $ADMIN_USERNAME $ADMIN_EMAIL 2>&1 | tee /logs/command_createadmin.log
 fi
 
 echo "Running backend server..."
