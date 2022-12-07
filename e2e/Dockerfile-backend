@@ -1,0 +1,5 @@
+FROM reallibrephotos/librephotos-dependencies:dev
+WORKDIR /code
+EXPOSE 8001
+COPY entrypoint-backend.sh /entrypoint.sh
+CMD ["/entrypoint.sh"]

@@ -1,0 +1,89 @@
+version: "3.8"
+
+networks:
+  e2e:
+
+volumes:
+  e2e_db:
+  e2e_cache:
+  e2e_logs:
+  e2e_protected_media:
+  e2e_scan_directory:
+
+services:
+  proxy:
+    image: reallibrephotos/librephotos-proxy:latest
+    container_name: e2e-proxy
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - e2e_scan_directory:/data
+      - e2e_protected_media:/protected_media
+      - ./proxy.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+      - frontend
+
+  db:
+    image: postgres:13
+    container_name: e2e-db
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - e2e_db:/var/lib/postgresql/data
+    command: postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c random_page_cost=1.0
+    healthcheck:
+      test: psql -U ${DB_USER} -d ${DB_NAME} -c "SELECT 1;"
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-frontend
+    container_name: e2e-frontend
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - "${FRONTEND_SRC}:/usr/src/app"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
+    container_name: e2e-backend
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - "${BACKEND_SRC}:/code"
+      - e2e_scan_directory:/data
+      - e2e_protected_media:/protected_media
+      - e2e_logs:/logs
+      - e2e_cache:/root/.cache
+    healthcheck:
+      test: ['CMD', 'curl', 'localhost:8001/api/schema']
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:6
+    container_name: e2e-redis
+    restart: unless-stopped
+    env_file: .env
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
