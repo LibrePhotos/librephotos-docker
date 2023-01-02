@@ -1,6 +1,5 @@
 FROM node:13-slim
 
-RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 RUN apt-get update && apt-get install git curl -y
 EXPOSE 3000
