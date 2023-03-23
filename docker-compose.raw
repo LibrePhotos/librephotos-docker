@@ -10,7 +10,10 @@
 version: "3.8"
 services:
   __proxy_name__:
-    image: reallibrephotos/librephotos-proxy:${tag}
+    tty: true
+    build:
+      context: ./proxy
+      dockerfile: Dockerfile
     container_name: __proxy_name__
     restart: unless-stopped
     volumes:
