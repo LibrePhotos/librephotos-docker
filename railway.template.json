@@ -1,0 +1,34 @@
+{
+  "name": "LibrePhotos on Railway",
+  "services": [
+    {
+      "name": "web",
+      "path": ".",
+      "dockerfilePath": "Dockerfile",
+      "buildCommand": null,
+      "startCommand": "gunicorn --bind 0.0.0.0:$PORT librephotos.wsgi:application"
+    },
+    {
+      "name": "db",
+      "service": "postgresql",
+      "type": "postgresql",
+      "plan": "hobby-dev"
+    },
+    {
+      "name": "redis",
+      "service": "redis",
+      "type": "redis",
+      "plan": "hobby-dev"
+    }
+  ],
+  "plugins": [],
+  "env": {
+    "SECRET_KEY": null,
+    "DB_BACKEND": "db",
+    "DB_NAME": "librephotos",
+    "DB_USER": "librephotos",
+    "DB_PASS": "librephotos",
+    "DB_HOST": "db",
+    "REDIS_HOST": "redis"
+  }
+}
