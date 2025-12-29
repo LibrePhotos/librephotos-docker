@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-backend
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-backend
+        {{- with .Values.backend.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.backend.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.backend.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: backend
+        image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default "2025w44" }}
+        {{- with .Values.backend.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Release.Name }}-backend
+        - secretRef:
+            name: {{ .Release.Name }}-backend
+        - secretRef:
+            name: {{ .Release.Name }}-database
+        ports:
+        - name: backend
+          containerPort: 8001
+        {{- with .Values.backend.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.backend.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.backend.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.backend.volumeMounts }}
+        volumeMounts:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+      - name: proxy
+        image: {{ .Values.backend.proxy.image.repository }}:{{ .Values.backend.proxy.image.tag | default "2025w44" }}
+        {{- with .Values.backend.proxy.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.backend.proxy.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        ports:
+        - name: proxy
+          containerPort: 80
+        {{- with .Values.backend.proxy.volumeMounts }}
+        volumeMounts:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+      {{- with .Values.backend.volumes }}
+      volumes:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend # Service names can't be modified because of proxy nginx.conf file
+spec:
+  selector:
+    app: {{ .Release.Name }}-backend
+  ports:
+  - name: http
+    port: 8001
+    targetPort: backend
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy # Service names can't be modified because of proxy nginx.conf file
+spec:
+  selector:
+    app: {{ .Release.Name }}-backend
+  ports:
+  - name: http
+    port: 80
+    targetPort: proxy
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-backend
+data:
+  BACKEND_HOST: "{{ .Values.backend.config.backendHost }}"
+  ADMIN_EMAIL: "{{ .Values.backend.config.adminEmail }}"
+  ADMIN_USERNAME: "{{ .Values.backend.config.adminUsername }}"
+  DB_NAME: "{{ .Values.database.config.dbName }}"
+  DB_HOST: "{{ .Values.database.config.dbHost }}"
+  DB_PORT: "{{ .Values.database.config.dbPort }}"
+  WEB_CONCURRENCY: "{{ .Values.backend.config.webConcurrency }}"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-backend
+type: Opaque
+data:
+  SECRET_KEY: {{ .Values.backend.secret.secretKey | default "changemechangemechangemechangeme" | b64enc }}
+  MAPBOX_API_KEY: {{ .Values.backend.secret.mapboxApiKey | default "" | b64enc }}
+  ADMIN_PASSWORD: {{ .Values.backend.secret.adminPassword | default "changeme" | b64enc }}

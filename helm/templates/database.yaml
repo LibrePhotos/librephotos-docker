@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-database
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-database
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-database
+        {{- with .Values.database.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.database.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.database.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.database.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.database.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: postgres
+        image: {{ .Values.database.image.repository }}:{{ .Values.database.image.tag | default "15" }}
+        env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: DB_PASS
+              name: {{ .Release.Name}}-database
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              key: DB_USER
+              name: {{ .Release.Name}}-database
+        - name: POSTGRES_DB
+          value: {{ .Values.database.config.dbName}}
+        {{- with .Values.database.livenessProbe }}
+        livenessProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.database.readinessProbe }}
+        readinessProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        ports:
+        - containerPort: 5432
+          name: psql
+        {{- with .Values.database.volumeMounts }}
+        volumeMounts:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.database.securityContext }}
+      securityContext:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.database.volumes }}
+      volumes:
+        {{- toYaml . | nindent 6 }}
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+spec:
+  ports:
+    - port: 5432
+      name: psql
+  selector:
+    app: {{ .Release.Name }}-database
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: {{ .Release.Name}}-database
+data:
+    DB_USER: {{ .Values.database.config.dbUser | default "librephotos" | b64enc }}
+    DB_PASS: {{ .Values.database.config.dbPass | default "changemechangemechangeme" |b64enc }}

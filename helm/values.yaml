@@ -1,0 +1,193 @@
+pvcs:
+  photos:
+    size: 30Gi
+  protected:
+    size: 3Gi
+  postgres:
+    size: 5Gi
+
+backend:
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  replicaCount: 1
+
+  image:
+    repository: reallibrephotos/librephotos
+    pullPolicy: IfNotPresent
+    tag: "2025w44"
+  
+  config:
+    backendHost: backend
+    adminEmail: somebody@example.com
+    adminUsername: admin
+    webConcurrency: 2
+
+  secret:
+    secretKey: changemechangemechangemechangeme
+    mapboxApiKey: changemechangemechangemechangeme
+    adminPassword: changeme
+
+  podSecurityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+  
+  securityContext:
+    readOnlyRootFilesystem: true
+
+  resources:
+    limits:
+      memory: 3072Mi
+    requests:
+      cpu: 100m
+      memory: 2048Mi
+  
+  livenessProbe: {}
+  readinessProbe: {}
+
+  volumes:
+    - name: photos
+      persistentVolumeClaim:
+        claimName: photos
+    - name: protected-media
+      persistentVolumeClaim:
+        claimName: protected
+    - name: logs
+      emptyDir: {}
+    - name: cache
+      emptyDir: {}
+    - name: backend-tmp
+      emptyDir: {}
+    - name: nginx-cache
+      emptyDir: {}
+    - name: proxy-var-run
+      emptyDir: {}
+  volumeMounts:
+  - name: photos
+    mountPath: /data
+  - name: protected-media
+    mountPath: /protected_media
+  - name: logs
+    mountPath: /logs
+  - name: cache
+    mountPath: /root/.cache
+  - name: backend-tmp
+    mountPath: /tmp
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetMemoryUtilizationPercentage: 80
+  
+  proxy:
+    resources: {}
+    image:
+      repository: reallibrephotos/librephotos-proxy
+      pullPolicy: IfNotPresent
+      tag: "2025w44"
+    volumeMounts:
+    - name: photos
+      mountPath: /data
+    - name: protected-media
+      mountPath: /protected_media
+    - name: nginx-cache
+      mountPath: /var/cache/nginx
+    - name: proxy-var-run
+      mountPath: /var/run
+    securityContext:
+      readOnlyRootFilesystem: true
+
+database:
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  
+  config:
+    dbUser: librephotos
+    dbPass: changemechangemechangeme
+    dbName: librephotos
+    dbHost: database
+    dbPort: 5432
+
+  image:
+    repository: postgres
+    pullPolicy: IfNotPresent
+    tag: "15"
+
+  livenessProbe:
+    exec:
+      command:
+      - pg_isready
+      - -h
+      - localhost
+      - -U
+      - $POSTGRES_USER
+
+  readinessProbe: {}
+
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1024Mi
+      cpu: 500m
+
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: postgres
+  volumeMounts:
+    - mountPath: /var/lib/postgresql/data
+      name: data
+
+  securityContext:
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
+
+frontend:
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  livenessProbe: {}
+  readinessProbe: {}
+  resources: {}
+
+  image:
+    repository: reallibrephotos/librephotos-frontend
+    pullPolicy: IfNotPresent
+    tag: "2025w44"
+
+  
+  podSecurityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+  
+  securityContext:
+    readOnlyRootFilesystem: true
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  host: librephotos.your-domain.com
+  tls:
+   secretName: your-ssl-certificate
