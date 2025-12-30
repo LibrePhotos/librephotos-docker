@@ -128,7 +128,7 @@ database:
       - -h
       - localhost
       - -U
-      - $POSTGRES_USER
+      - librephotos
 
   readinessProbe: {}
 
