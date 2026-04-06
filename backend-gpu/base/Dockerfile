@@ -30,7 +30,6 @@ RUN apt-get update && \
 	libglib2.0-dev \
 	libgsf-1-dev \ 
 	libheif-dev \
-	libimage-exiftool-perl \
 	libimagequant-dev \
 	libjpeg-dev \
 	liblapack-dev \
@@ -114,7 +113,8 @@ RUN apt-get update && \
     libwebp-dev \
     libopenblas-dev \
     libpq-dev \
-    libimage-exiftool-perl \
+    make \
+    perl \
     libxext6 \
     libxrender1 \
     libmagic1 \
@@ -123,6 +123,18 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cu121
+
+# Install ExifTool
+ARG EXIFTOOL_DOWNLOAD_URL=https://sourceforge.net/projects/exiftool/files/latest/download
+RUN mkdir -p /tmp/exiftool && \
+    cd /tmp/exiftool && \
+    curl -fSL "${EXIFTOOL_DOWNLOAD_URL}" -o exiftool.tar.gz && \
+    tar -xzf exiftool.tar.gz && \
+    cd Image-ExifTool-* && \
+    perl Makefile.PL && \
+    make install && \
+    exiftool -ver && \
+    rm -rf /tmp/exiftool
 
 # Copy only required components from the builder stage
 COPY --from=builder /usr/local/lib/libMagick* /usr/local/lib/

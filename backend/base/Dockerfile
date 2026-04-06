@@ -30,7 +30,6 @@ RUN apt-get update && \
 		libglib2.0-dev \
 		libgsf-1-dev \ 
 		libheif-dev \
-		libimage-exiftool-perl \
 		libimagequant-dev \
 		libjpeg-dev \
 		libgomp1 \
@@ -42,6 +41,7 @@ RUN apt-get update && \
 		liborc-dev \
 		libpng-dev \
 		libpq-dev \
+		perl \
 		librsvg2-dev \
 		libsm6 \
 		libtiff5-dev \ 
@@ -90,6 +90,18 @@ RUN curl -SL https://imagemagick.org/archive/releases/ImageMagick-${IMAGEMAGICK_
 	make install && \
 	ldconfig /usr/local/lib && \
     rm -rf /tmp/builds/*
+
+# Install ExifTool
+ARG EXIFTOOL_DOWNLOAD_URL=https://sourceforge.net/projects/exiftool/files/latest/download
+RUN mkdir -p /tmp/exiftool && \
+    cd /tmp/exiftool && \
+    curl -fSL "${EXIFTOOL_DOWNLOAD_URL}" -o exiftool.tar.gz && \
+    tar -xzf exiftool.tar.gz && \
+    cd Image-ExifTool-* && \
+    perl Makefile.PL && \
+    make install && \
+    exiftool -ver && \
+    rm -rf /tmp/exiftool
 
 # Install PyTorch (CPU version)
 RUN pip3 install --no-cache-dir --break-system-packages torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
