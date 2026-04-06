@@ -131,7 +131,7 @@ RUN set -eux; \
     cd /tmp/exiftool; \
     curl --fail --show-error --location --retry 3 --retry-all-errors "${EXIFTOOL_DOWNLOAD_URL}" -o exiftool.tar.gz; \
     tar -xzf exiftool.tar.gz; \
-    EXIFTOOL_DIR="$(find /tmp/exiftool -maxdepth 1 -mindepth 1 -type d -name 'Image-ExifTool-*' | head -n 1)"; \
+    EXIFTOOL_DIR="$(find /tmp/exiftool -mindepth 1 -maxdepth 1 -type d -name 'Image-ExifTool-*' | head -n 1)"; \
     test -n "${EXIFTOOL_DIR}"; \
     cd "${EXIFTOOL_DIR}"; \
     perl Makefile.PL; \
