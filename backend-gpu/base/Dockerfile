@@ -114,6 +114,7 @@ RUN apt-get update && \
     libwebp-dev \
     libopenblas-dev \
     libpq-dev \
+    libimage-exiftool-perl \
     libxext6 \
     libxrender1 \
     libmagic1 \
@@ -122,14 +123,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cu121
-
-# Install ExifTool
-WORKDIR /tmp/exiftool
-RUN curl -SL https://exiftool.org/Image-ExifTool-13.04.tar.gz | tar -xz && \
-    cd Image-ExifTool-13.04 && \
-    perl Makefile.PL && \
-    make install && \
-    rm -rf /tmp/exiftool
 
 # Copy only required components from the builder stage
 COPY --from=builder /usr/local/lib/libMagick* /usr/local/lib/
