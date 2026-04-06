@@ -93,14 +93,17 @@ RUN curl -SL https://imagemagick.org/archive/releases/ImageMagick-${IMAGEMAGICK_
 
 # Install ExifTool
 ARG EXIFTOOL_DOWNLOAD_URL=https://sourceforge.net/projects/exiftool/files/latest/download
-RUN mkdir -p /tmp/exiftool && \
-    cd /tmp/exiftool && \
-    curl -fSL "${EXIFTOOL_DOWNLOAD_URL}" -o exiftool.tar.gz && \
-    tar -xzf exiftool.tar.gz && \
-    cd Image-ExifTool-* && \
-    perl Makefile.PL && \
-    make install && \
-    exiftool -ver && \
+RUN set -eux; \
+    mkdir -p /tmp/exiftool; \
+    cd /tmp/exiftool; \
+    curl --fail --show-error --location --retry 3 --retry-all-errors "${EXIFTOOL_DOWNLOAD_URL}" -o exiftool.tar.gz; \
+    tar -xzf exiftool.tar.gz; \
+    EXIFTOOL_DIR="$(find /tmp/exiftool -maxdepth 1 -mindepth 1 -type d -name 'Image-ExifTool-*' | head -n 1)"; \
+    test -n "${EXIFTOOL_DIR}"; \
+    cd "${EXIFTOOL_DIR}"; \
+    perl Makefile.PL; \
+    make install; \
+    exiftool -ver; \
     rm -rf /tmp/exiftool
 
 # Install PyTorch (CPU version)
