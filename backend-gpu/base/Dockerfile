@@ -132,11 +132,11 @@ RUN set -eux; \
     curl --fail --show-error --location --retry 3 --retry-all-errors "${EXIFTOOL_DOWNLOAD_URL}" -o exiftool.tar.gz; \
     tar -xzf exiftool.tar.gz; \
     EXIFTOOL_DIR="$(find /tmp/exiftool -mindepth 1 -maxdepth 1 -type d -name 'Image-ExifTool-*' | head -n 1)"; \
-    test -n "${EXIFTOOL_DIR}"; \
+    test -n "${EXIFTOOL_DIR}" || { echo "ExifTool source directory not found"; exit 1; }; \
     cd "${EXIFTOOL_DIR}"; \
     perl Makefile.PL; \
     make install; \
-    exiftool -ver; \
+    echo "Installed ExifTool $(exiftool -ver)"; \
     rm -rf /tmp/exiftool
 
 # Copy only required components from the builder stage
